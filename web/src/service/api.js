@@ -23,6 +23,10 @@ class ApiService extends Service {
     let data = param;
     return this.fetch(`/api/server/shutdown`).post(data).json();
   }
+  async startContainer(param) {
+    let data = param;
+    return this.fetch(`/api/server/start`).post(data).json();
+  }
 
   async getPlayerList(param) {
     const query = this.generateQuery(param);

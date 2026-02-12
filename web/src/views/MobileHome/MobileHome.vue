@@ -3,11 +3,12 @@ import {
   AdminPanelSettingsOutlined,
   SupervisedUserCircleRound,
   SettingsPowerRound,
+  PlayArrowRound,
 } from "@vicons/material";
 import { ChevronsLeft } from "@vicons/tabler";
 import { GameController, LanguageSharp } from "@vicons/ionicons5";
 import { BroadcastTower } from "@vicons/fa";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, h } from "vue";
 import { NTag, NButton, useMessage, useDialog } from "naive-ui";
 import { useI18n } from "vue-i18n";
 import ApiService from "@/service/api";
@@ -265,6 +266,62 @@ const handleShutdown = () => {
   }
 };
 
+const CONTAINER_NAME_KEY = "palworld_container_name";
+const containerName = ref(localStorage.getItem(CONTAINER_NAME_KEY) || "palworld");
+
+const doStartContainer = async () => {
+  return await new ApiService().startContainer({
+    container_name: containerName.value,
+  });
+};
+
+const handleStartContainer = () => {
+  if (checkAuthToken()) {
+    dialog.info({
+      title: t("button.start"),
+      content: () =>
+        h("div", [
+          h("p", { style: { marginBottom: "12px" } }, t("message.starttip")),
+          h("div", { style: { marginBottom: "8px" } }, t("message.containerNameLabel")),
+          h("input", {
+            type: "text",
+            value: containerName.value,
+            style: {
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #d9d9d9",
+              borderRadius: "4px",
+              fontSize: "14px",
+            },
+            onInput: (e) => {
+              containerName.value = e.target.value;
+            },
+          }),
+        ]),
+      positiveText: t("button.confirm"),
+      negativeText: t("button.cancel"),
+      onPositiveClick: async () => {
+        if (!containerName.value.trim()) {
+          message.error(t("message.startfail", { err: "Container name cannot be empty" }));
+          return false;
+        }
+        localStorage.setItem(CONTAINER_NAME_KEY, containerName.value);
+        const { data, statusCode } = await doStartContainer();
+        if (statusCode.value === 200) {
+          message.success(t("message.startsuccess"));
+          return;
+        } else {
+          message.error(t("message.startfail", { err: data.value?.error }));
+        }
+      },
+      onNegativeClick: () => {},
+    });
+  } else {
+    message.error(t("message.requireauth"));
+    showLoginModal.value = true;
+  }
+};
+
 const toPlayers = async () => {
   if (currentDisplay.value === "players") {
     return;
@@ -452,6 +509,22 @@ onMounted(async () => {
                   </n-icon>
                 </template>
                 {{ $t("button.broadcast") }}
+              </n-button>
+              <n-button
+                size="small"
+                type="success"
+                class="mr-2"
+                secondary
+                strong
+                round
+                @click="handleStartContainer"
+              >
+                <template #icon>
+                  <n-icon>
+                    <PlayArrowRound />
+                  </n-icon>
+                </template>
+                {{ $t("button.start") }}
               </n-button>
               <n-button
                 size="small"

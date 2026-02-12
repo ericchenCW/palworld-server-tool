@@ -9,6 +9,7 @@ import {
   ArchiveOutlined,
   CloudDownloadOutlined,
   PublicRound,
+  PlayArrowRound,
 } from "@vicons/material";
 import {
   GameController,
@@ -419,6 +420,21 @@ const controlCenterOption = [
       return h(
         "div",
         {
+          style: { color: "#18a058" },
+        },
+        {
+          default: () => t("button.start"),
+        }
+      );
+    },
+    key: "start",
+    icon: renderIcon(PlayArrowRound, "#18a058"),
+  },
+  {
+    label: () => {
+      return h(
+        "div",
+        {
           style: { color: "#cc2d48" },
         },
         {
@@ -439,6 +455,8 @@ const handleSelectControlCenter = (key) => {
     handleRconDrawer();
   } else if (key === "broadcast") {
     handleStartBrodcast();
+  } else if (key === "start") {
+    handleStartContainer();
   } else if (key === "shutdown") {
     handleShutdown();
   } else {
@@ -588,6 +606,62 @@ const handleShutdown = () => {
           return;
         } else {
           message.error(t("message.shutdownfail", { err: data.value?.error }));
+        }
+      },
+      onNegativeClick: () => {},
+    });
+  } else {
+    message.error(t("message.requireauth"));
+    showLoginModal.value = true;
+  }
+};
+
+const CONTAINER_NAME_KEY = "palworld_container_name";
+const containerName = ref(localStorage.getItem(CONTAINER_NAME_KEY) || "palworld");
+
+const doStartContainer = async () => {
+  return await new ApiService().startContainer({
+    container_name: containerName.value,
+  });
+};
+
+const handleStartContainer = () => {
+  if (checkAuthToken()) {
+    dialog.info({
+      title: t("button.start"),
+      content: () =>
+        h("div", [
+          h("p", { style: { marginBottom: "12px" } }, t("message.starttip")),
+          h("div", { style: { marginBottom: "8px" } }, t("message.containerNameLabel")),
+          h("input", {
+            type: "text",
+            value: containerName.value,
+            style: {
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #d9d9d9",
+              borderRadius: "4px",
+              fontSize: "14px",
+            },
+            onInput: (e) => {
+              containerName.value = e.target.value;
+            },
+          }),
+        ]),
+      positiveText: t("button.confirm"),
+      negativeText: t("button.cancel"),
+      onPositiveClick: async () => {
+        if (!containerName.value.trim()) {
+          message.error(t("message.startfail", { err: "Container name cannot be empty" }));
+          return false;
+        }
+        localStorage.setItem(CONTAINER_NAME_KEY, containerName.value);
+        const { data, statusCode } = await doStartContainer();
+        if (statusCode.value === 200) {
+          message.success(t("message.startsuccess"));
+          return;
+        } else {
+          message.error(t("message.startfail", { err: data.value?.error }));
         }
       },
       onNegativeClick: () => {},

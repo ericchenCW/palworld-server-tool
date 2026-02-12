@@ -32,6 +32,10 @@ type ShutdownRequest struct {
 	Message string `json:"message"`
 }
 
+type StartContainerRequest struct {
+	ContainerName string `json:"container_name"`
+}
+
 type ServerToolResponse struct {
 	Version string `json:"version"`
 	Latest  string `json:"latest"`
@@ -180,4 +184,35 @@ func validateMessage(message string) error {
 		return errors.New("message cannot be empty")
 	}
 	return nil
+}
+
+// startContainer godoc
+//
+//	@Summary		Start Docker Container
+//	@Description	Start a Docker container by name
+//	@Tags			Server
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Param			start	body		StartContainerRequest	true	"Container Name"
+//
+//	@Success		200		{object}	SuccessResponse
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		401		{object}	ErrorResponse
+//	@Router			/api/server/start [post]
+func startContainer(c *gin.Context) {
+	var req StartContainerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.ContainerName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "container_name cannot be empty"})
+		return
+	}
+	if err := tool.StartContainer(req.ContainerName); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
