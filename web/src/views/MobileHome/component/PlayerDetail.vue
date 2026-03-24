@@ -335,7 +335,7 @@ onMounted(async () => {
         </n-space> -->
         <div class="flex w-full mt-5">
           <n-input
-            v-model="searchValue"
+            v-model:value="searchValue"
             :placeholder="$t('input.searchPlaceholder')"
             @update:value="clickSearch"
             style="border: none"
